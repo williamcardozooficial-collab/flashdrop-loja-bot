@@ -14,7 +14,7 @@ app.use(express.static(path.join(__dirname, '../admin')));
 const PORT = process.env.PORT || 3001;
 const BOT_SECRET = process.env.BOT_SECRET || 'flashdrop-loja-bot-secret';
 
-// Map de instâncias: lojaId -> { client, status, qrCode, phone }
+// Map de instÃ¢ncias: lojaId -> { client, status, qrCode, phone }
 const instances = {};
 
 // --- Auth middleware ---
@@ -24,7 +24,7 @@ function auth(req, res, next) {
   next();
 }
 
-// --- Cria ou retorna instância de uma loja ---
+// --- Cria ou retorna instÃ¢ncia de uma loja ---
 function getInstance(lojaId) {
   if (!instances[lojaId]) {
     instances[lojaId] = {
@@ -84,7 +84,7 @@ function startClient(lojaId) {
 }
 
 // ============================
-// ROTAS PÚBLICAS (sem auth)
+// ROTAS PÃBLICAS (sem auth)
 // ============================
 
 // Status de uma loja
@@ -99,7 +99,7 @@ app.get('/api/loja/:lojaId/status', (req, res) => {
 app.post('/api/loja/:lojaId/connect', (req, res) => {
   const { lojaId } = req.params;
   startClient(lojaId);
-  res.json({ ok: true, message: 'Iniciando conexão...' });
+  res.json({ ok: true, message: 'Iniciando conexÃ£o...' });
 });
 
 // Desconectar loja
@@ -118,7 +118,7 @@ app.post('/api/loja/:lojaId/disconnect', async (req, res) => {
 // ROTAS INTERNAS (com auth)
 // ============================
 
-// Enviar mensagem para número
+// Enviar mensagem para nÃºmero
 app.post('/api/send-message', auth, async (req, res) => {
   const { lojaId, phone, message } = req.body;
   if (!lojaId || !phone || !message) return res.status(400).json({ error: 'lojaId, phone e message obrigatorios' });
@@ -129,8 +129,10 @@ app.post('/api/send-message', auth, async (req, res) => {
   }
 
   try {
-    const chatId = phone.replace(/\D/g, '') + '@c.us';
-    await inst.client.sendMessage(chatId, message);
+    const numClean = phone.replace(/\D/g, '');
+    const numId = await inst.client.getNumberId(numClean);
+    if (numId == null) return res.status(404).json({ error: 'Numero nao encontrado no WhatsApp' });
+    await inst.client.sendMessage(numId._serialized, message);
     res.json({ ok: true });
   } catch(e) {
     res.status(500).json({ error: e.message });
