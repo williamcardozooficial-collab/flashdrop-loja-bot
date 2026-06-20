@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>FlashDrop Loja Bot - Admin</title>
+<style>
+  body { font-family: sans-serif; background: #111; color: #eee; padding: 20px; }
+  h2 { color: #25D366; }
+  .inst { background: #1a1a1a; border-radius: 8px; padding: 15px; margin: 10px 0; }
+  .connected { border-left: 4px solid #25D366; }
+  .disconnected { border-left: 4px solid #666; }
+  .qr { border-left: 4px solid #f0a500; }
+  img { max-width: 200px; margin-top: 10px; display: block; }
+</style>
+</head>
+<body>
+<h2>⚡ FlashDrop Loja Bot</h2>
+<p>Instancias ativas:</p>
+<div id="instances">Carregando...</div>
+<script>
+async function load() {
+  const r = await fetch('/health');
+  const d = await r.json();
+  const el = document.getElementById('instances');
+  if (!d.detail || d.detail.length === 0) {
+    el.innerHTML = '<p>Nenhuma loja conectada ainda.</p>';
+    return;
+  }
+  el.innerHTML = d.detail.map(i =>
+    '<div class="inst ' + i.status + '">' +
+    '<b>Loja ' + i.lojaId + '</b> — ' + i.status +
+    (i.phone ? ' — ' + i.phone : '') +
+    '</div>'
+  ).join('');
+}
+load();
+setInterval(load, 5000);
+</script>
+</body>
+</html>
