@@ -10,6 +10,8 @@
   .connected { border-left: 4px solid #25D366; }
   .disconnected { border-left: 4px solid #666; }
   .qr { border-left: 4px solid #f0a500; }
+  .hibernated { border-left: 4px solid #3b82f6; }
+  .loading { border-left: 4px solid #888; }
   img { max-width: 200px; margin-top: 10px; display: block; }
 </style>
 </head>
@@ -26,9 +28,10 @@ async function load() {
     el.innerHTML = '<p>Nenhuma loja conectada ainda.</p>';
     return;
   }
+  const labels = { connected: 'conectado', disconnected: 'desconectado', qr: 'aguardando QR', loading: 'conectando...', hibernated: 'dormindo (economia de memoria)' };
   el.innerHTML = d.detail.map(i =>
     '<div class="inst ' + i.status + '">' +
-    '<b>Loja ' + i.lojaId + '</b> — ' + i.status +
+    '<b>Loja ' + i.lojaId + '</b> — ' + (labels[i.status] || i.status) +
     (i.phone ? ' — ' + i.phone : '') +
     '</div>'
   ).join('');
