@@ -2,7 +2,20 @@ const express = require('express');
 const { Client, LocalAuth, MessageMedia } = require('whatsapp-web.js');
 const qrcode = require('qrcode');
 const path = require('path');
+const fs = require('fs');
 require('dotenv').config();
+
+// Pasta onde a sessao do WhatsApp (LocalAuth) fica salva em disco. Por padrao
+// fica dentro do proprio container (.wwebjs_auth), que e apagado toda vez que
+// o Railway derruba/recria o container (por exemplo, ao "dormir" por
+// inatividade para economizar - diferente da hibernacao interna do app, que
+// so fecha o Chrome mas mantem o container e o disco vivos).
+// Se WWEBJS_AUTH_PATH apontar para um Volume persistente do Railway montado
+// nesse caminho, a sessao sobrevive ao container reiniciar e a loja acorda
+// sozinha sem precisar escanear o QR de novo.
+const WWEBJS_AUTH_PATH = process.env.WWEBJS_AUTH_PATH || path.join(process.cwd(), '.wwebjs_auth');
+try { fs.mkdirSync(WWEBJS_AUTH_PATH, { recursive: true }); } catch (e) { console.error('[LOJA BOT] Erro ao preparar pasta de sessao:', e.message); }
+console.log('[LOJA BOT] Sessao do WhatsApp salva em: ' + WWEBJS_AUTH_PATH + (process.env.WWEBJS_AUTH_PATH ? ' (via WWEBJS_AUTH_PATH)' : ' (padrao - NAO sobrevive a reinicio do container sem um Volume aqui)'));
 
 const app = express();
 app.use(express.json());
@@ -71,7 +84,7 @@ async function startClient(lojaId) {
   inst.phone = null;
 
   const client = new Client({
-    authStrategy: new LocalAuth({ clientId: `loja_${lojaId}` }),
+    authStrategy: new LocalAuth({ clientId: `loja_${lojaId}`, dataPath: WWEBJS_AUTH_PATH }),
     puppeteer: {
       headless: true,
       executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
