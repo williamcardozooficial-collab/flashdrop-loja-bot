@@ -272,7 +272,13 @@ app.post('/api/send-message', auth, async (req, res) => {
 
   try {
     const numClean = phone.replace(/\D/g, '');
-    const numId = await inst.client.getNumberId(numClean);
+    // Numero brasileiro sem o codigo do pais (DDD + numero = 10 ou 11 digitos) precisa
+    // do "55" na frente antes de resolver no WhatsApp - sem isso o getNumberId pode
+    // casar com um numero de outro pais que tem a mesma sequencia de digitos, mandando
+    // a mensagem pro destinatario errado. Aqui e sempre Brasil, entao completamos o
+    // codigo do pais quando ele nao vier junto (e nao mexemos se ja vier com 55 ou mais).
+    const numBR = (numClean.length === 10 || numClean.length === 11) ? ('55' + numClean) : numClean;
+    const numId = await inst.client.getNumberId(numBR);
     if (numId == null) return res.status(404).json({ error: 'Numero nao encontrado no WhatsApp' });
     await inst.client.sendMessage(numId._serialized, message);
     res.json({ ok: true });
